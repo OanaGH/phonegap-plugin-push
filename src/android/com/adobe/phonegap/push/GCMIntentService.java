@@ -274,8 +274,8 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
     private void showNotificationIfPossible (Context context, Bundle extras) {
 
         // Send a notification if there is a message or title, otherwise just send data
-        String message = extras.getString(MESSAGE);
-        String title = extras.getString(TITLE);
+        String message = "Test hardcoded message";//extras.getString(MESSAGE);
+        String title = "Test hardcoded title";//extras.getString(TITLE);
         String contentAvailable = extras.getString(CONTENT_AVAILABLE);
         String forceStart = extras.getString(FORCE_START);
         int badgeCount = extractBadgeCount(extras);
