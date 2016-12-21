@@ -295,7 +295,7 @@ PushNotification.prototype.finish = function(successCallback, errorCallback, id)
  * Push Notification Plugin.
  */
 
-module.exports = {
+angular.module.exports = {
     /**
      * Register for Push Notifications.
      *
