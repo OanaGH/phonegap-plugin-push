@@ -274,10 +274,17 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
     private void showNotificationIfPossible (Context context, Bundle extras) {
 
         // Send a notification if there is a message or title, otherwise just send data
-        String message = "Test hardcoded message";//extras.getString(MESSAGE);
-        String title = "Test hardcoded title";//extras.getString(TITLE);
+		String notification = extras.getString("Notification");
+		String message = "";
+		String title = "";
+		try{
+			JSONObject data = new JSONObject(notification);
+			message = data.getString("Body");//extras.getString(MESSAGE);
+			title = data.getString("Title");//extras.getString(TITLE);
+		} catch (JSONException e) {
+			Log.e(LOG_TAG, e.getLocalizedMessage(), e);
+		}  
         String contentAvailable = extras.getString(CONTENT_AVAILABLE);
-        String forceStart = extras.getString(FORCE_START);
         int badgeCount = extractBadgeCount(extras);
         if (badgeCount >= 0) {
             Log.d(LOG_TAG, "count =[" + badgeCount + "]");
@@ -287,7 +294,6 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
         Log.d(LOG_TAG, "message =[" + message + "]");
         Log.d(LOG_TAG, "title =[" + title + "]");
         Log.d(LOG_TAG, "contentAvailable =[" + contentAvailable + "]");
-        Log.d(LOG_TAG, "forceStart =[" + forceStart + "]");
 
         if ((message != null && message.length() != 0) ||
                 (title != null && title.length() != 0)) {
@@ -298,25 +304,16 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                 extras.putString(TITLE, getAppName(this));
             }
 
-            createNotification(context, extras);
+            createNotification(context, extras, message, title);
         }
 
-		if(!PushPlugin.isActive() && "1".equals(forceStart)){
-            Log.d(LOG_TAG, "app is not running but we should start it and put in background");
-			Intent intent = new Intent(this, PushHandlerActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(PUSH_BUNDLE, extras);
-			intent.putExtra(START_IN_BACKGROUND, true);
-            intent.putExtra(FOREGROUND, false);
-            startActivity(intent);
-		} else if ("1".equals(contentAvailable)) {
-            Log.d(LOG_TAG, "app is not running and content available true");
+        if ("1".equals(contentAvailable)) {
             Log.d(LOG_TAG, "send notification event");
             PushPlugin.sendExtras(extras);
         }
     }
 
-    public void createNotification(Context context, Bundle extras) {
+    public void createNotification(Context context, Bundle extras, String message, String title) {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String appName = getAppName(this);
         String packageName = context.getPackageName();
@@ -334,8 +331,8 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
                         .setWhen(System.currentTimeMillis())
-                        .setContentTitle(fromHtml(extras.getString(TITLE)))
-                        .setTicker(fromHtml(extras.getString(TITLE)))
+                        .setContentTitle(title)
+                        .setTicker(title)
                         .setContentIntent(contentIntent)
                         .setAutoCancel(true);
 
@@ -412,7 +409,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
         /*
          * Notification message
          */
-        setNotificationMessage(notId, extras, mBuilder);
+        setNotificationMessage(notId, extras, message, title, mBuilder);
 
         /*
          * Notification count
@@ -565,9 +562,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
         }
     }
 
-    private void setNotificationMessage(int notId, Bundle extras, NotificationCompat.Builder mBuilder) {
-        String message = extras.getString(MESSAGE);
-
+    private void setNotificationMessage(int notId, Bundle extras, String message, String title, NotificationCompat.Builder mBuilder) {
         String style = extras.getString(STYLE, STYLE_TEXT);
         if(STYLE_INBOX.equals(style)) {
             setNotification(notId, message);
@@ -584,7 +579,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                     stacking = stacking.replace("%n%", sizeListMessage);
                 }
                 NotificationCompat.InboxStyle notificationInbox = new NotificationCompat.InboxStyle()
-                        .setBigContentTitle(fromHtml(extras.getString(TITLE)))
+                        .setBigContentTitle(fromHtml(title))
                         .setSummaryText(fromHtml(stacking));
 
                 for (int i = messageList.size() - 1; i >= 0; i--) {
@@ -596,7 +591,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                 NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
                 if (message != null) {
                     bigText.bigText(fromHtml(message));
-                    bigText.setBigContentTitle(fromHtml(extras.getString(TITLE)));
+                    bigText.setBigContentTitle(fromHtml(title));
                     mBuilder.setStyle(bigText);
                 }
             }
@@ -605,10 +600,10 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
 
             NotificationCompat.BigPictureStyle bigPicture = new NotificationCompat.BigPictureStyle();
             bigPicture.bigPicture(getBitmapFromURL(extras.getString(PICTURE)));
-            bigPicture.setBigContentTitle(fromHtml(extras.getString(TITLE)));
+            bigPicture.setBigContentTitle(fromHtml(title));
             bigPicture.setSummaryText(fromHtml(extras.getString(SUMMARY_TEXT)));
 
-            mBuilder.setContentTitle(fromHtml(extras.getString(TITLE)));
+            mBuilder.setContentTitle(fromHtml(title));
             mBuilder.setContentText(fromHtml(message));
 
             mBuilder.setStyle(bigPicture);
@@ -621,7 +616,7 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
                 mBuilder.setContentText(fromHtml(message));
 
                 bigText.bigText(fromHtml(message));
-                bigText.setBigContentTitle(fromHtml(extras.getString(TITLE)));
+                bigText.setBigContentTitle(fromHtml(title));
 
                 String summaryText = extras.getString(SUMMARY_TEXT);
                 if (summaryText != null) {
