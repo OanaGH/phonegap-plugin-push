@@ -13,6 +13,7 @@
 - [iOS details](#ios-details)
   - [XCode](#xcode)
   - [Bitcode](#bitcode)
+    - [CocoaPod Disk Space](#cocoapod-disk-space)
 - [Additional Resources](#additional-resources)
 
 This requires phonegap/cordova CLI 5.0+
@@ -209,6 +210,15 @@ You have two options. The first is to [disable bitcode as per this StackOverflow
 cordova platform update ios@4.0.0
 ```
 
+
+##### CocoaPod Disk Space
+
+Running `pod setup` can take over 1 GB of disk space and that can take quite some time to download over a slow internet connection. If you are having issues with disk space/network try this neat hack from @VinceOPS.
+
+```
+git clone --verbose --depth=1 https://github.com/CocoaPods/Specs.git ~/.cocoapods/repos/master
+pod setup --verbose
+```
 ## Additional Resources
 
 The push plugin enables you to play sounds and display different icons during push (Android only). These additional resources need to be added to your projects `platforms` directory in order for them to be included into your final application binary. One way of doing it is to create a hook to do the copying for you on each build.
